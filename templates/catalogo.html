@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Catálogo — AfinAR{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <div class="page-header">
+        <h1>Catálogo <span class="accent">Exclusivo</span></h1>
+        <p class="page-sub">Instrumentos originales de fábrica y complementos seleccionados para músicos profesionales</p>
+    </div>
+
+    <!-- Filtros de categoría -->
+    <div class="category-bar">
+        <a href="{{ url_for('catalogo') }}"
+           class="cat-pill {% if not categoria_activa %}active{% endif %}">
+            Todos los productos
+        </a>
+        {% for cat in categorias %}
+        <a href="{{ url_for('catalogo', categoria=cat.categoria) }}"
+           class="cat-pill {% if categoria_activa == cat.categoria %}active{% endif %}">
+            {{ cat.categoria }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Grilla de productos -->
+    {% if productos %}
+    <div class="product-grid">
+        {% for p in productos %}
+        <div class="product-card">
+            <a href="{{ url_for('producto', id=p.id) }}" style="display:block; flex:1;">
+                {% if p.imagen_url %}
+                    <img src="{{ p.imagen_url }}" alt="{{ p.nombre }}" class="product-img" loading="lazy">
+                {% else %}
+                    <div class="product-img-placeholder">🎸</div>
+                {% endif %}
+                <div class="product-body">
+                    <span class="product-cat">{{ p.categoria }}</span>
+                    <h3 class="product-name">{{ p.nombre }}</h3>
+                    <p class="product-desc">{{ p.descripcion[:75] }}{% if p.descripcion|length > 75 %}…{% endif %}</p>
+                    <div class="product-footer">
+                        <span class="product-price">${{ '{:,.0f}'.format(p.precio).replace(',', '.') }}</span>
+                        <span class="product-stock {% if p.stock <= 3 %}low{% endif %}">
+                            {% if p.stock == 0 %}Agotado{% elif p.stock <= 3 %}Últimas {{ p.stock }}{% else %}Stock: {{ p.stock }}{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </a>
+            <div style="padding: 0 1rem 1rem;">
+                <button type="button" class="btn-add"
+                        onclick="addToCart({{ p.id }}, '{{ p.nombre }}', {{ p.precio }}, 1)">
+                    + Agregar al carrito
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No hay productos en esta categoría.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

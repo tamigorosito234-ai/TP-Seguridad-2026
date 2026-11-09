@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AfinAR — Instrumentos Originales{% endblock %}</title>
+    <!-- Google Fonts: Cinzel + Montserrat + Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Montserrat:wght@800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="{{ url_for('catalogo') }}" class="nav-logo">
+            <span class="logo-text-afin">Afin</span><span class="logo-text-ar">AR</span><span class="logo-dot">.</span>
+        </a>
+
+        <form action="{{ url_for('buscar') }}" method="GET" class="nav-search">
+            <input type="text" name="q" placeholder="Buscar guitarras, teclados, cuerdas, afinadores..." value="{{ request.args.get('q', '') }}">
+            <button type="submit" title="Buscar">🔍</button>
+        </form>
+
+        <div class="nav-actions">
+            <!-- Boton del carrito -->
+            <button type="button" class="cart-btn" onclick="openDrawer()" title="Ver carrito">
+                🛒
+                <span id="cart-badge" class="cart-badge">0</span>
+            </button>
+
+            {% if session.get('user') %}
+                <span class="nav-user">👤 {{ session.user.username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn-outline">Salir</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn-gold">Ingresar</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<!-- Overlay y Drawer del Carrito -->
+<div id="cart-overlay" class="cart-overlay" onclick="closeDrawer()"></div>
+<aside id="cart-drawer" class="cart-drawer">
+    <div class="cart-header">
+        <h2>Tu Carrito</h2>
+        <button class="cart-close" onclick="closeDrawer()" title="Cerrar">✕</button>
+    </div>
+    <div id="cart-items" class="cart-items">
+        <!-- Renderizado dinamicamente por cart.js -->
+    </div>
+    <div class="cart-footer">
+        <div class="cart-total-row">
+            <span class="cart-total-label">TOTAL ESTIMADO</span>
+            <span id="cart-total" class="cart-total-amount">$0</span>
+        </div>
+        <button type="button" class="btn-gold btn-full" onclick="openCheckout()">
+            Continuar con la compra →
+        </button>
+    </div>
+</aside>
+
+<!-- Modal de Checkout / Inicio de Sesion Requerido -->
+<div id="checkout-modal" class="modal-overlay" onclick="if(event.target === this) closeCheckout()">
+    <div class="modal-card">
+        <div class="modal-logo">
+            <span class="logo-text-afin">Afin</span><span class="logo-text-ar">AR</span><span class="logo-dot">.</span>
+        </div>
+        <h3 class="modal-title">Identificate para comprar</h3>
+        <p class="modal-sub">Para procesar tu pedido seleccioná tu método de ingreso:</p>
+
+        <div class="modal-options">
+            <button type="button" class="btn-modal-option">
+                <span>🔴</span> Continuar con Google
+            </button>
+            <button type="button" class="btn-modal-option">
+                <span>✉️</span> Continuar con Correo electrónico
+            </button>
+            <button type="button" class="btn-modal-option">
+                <span>🍎</span> Continuar con Apple ID
+            </button>
+        </div>
+
+        <div class="modal-warning">
+            ⚠️ <strong>Aviso del sistema:</strong> El flujo de autenticación federada y pasarela de pago no está implementado en este entorno de demostración.
+        </div>
+
+        <button type="button" class="modal-close-btn" onclick="closeCheckout()">
+            Cerrar y seguir navegando
+        </button>
+    </div>
+</div>
+
+<footer class="footer">
+    <p>© 2026 <strong>AfinAR</strong> — Instrumentos Originales de Fábrica &nbsp;|&nbsp; UTN FRC · Seguridad en el Desarrollo de Software</p>
+</footer>
+
+<script src="{{ url_for('static', filename='cart.js') }}"></script>
+</body>
+</html>

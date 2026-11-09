@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Buscar — AfinAR{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <div class="page-header">
+        <h1>Resultados para <span class="accent">"{{ q }}"</span></h1>
+        <p class="page-sub">{{ resultados|length }} producto(s) encontrado(s)</p>
+    </div>
+
+    {% if resultados %}
+    <div class="product-grid">
+        {% for p in resultados %}
+        <div class="product-card">
+            <!-- p: id=0, nombre=1, descripcion=2, categoria=3, precio=4, stock=5, imagen_url=6 -->
+            <a href="{{ url_for('producto', id=p[0]) }}" style="display:block; flex:1;">
+                {% if p[6] %}
+                    <img src="{{ p[6] }}" alt="{{ p[1] }}" class="product-img" loading="lazy">
+                {% else %}
+                    <div class="product-img-placeholder">🎼</div>
+                {% endif %}
+                <div class="product-body">
+                    <span class="product-cat">{{ p[3] }}</span>
+                    <h3 class="product-name">{{ p[1] }}</h3>
+                    <p class="product-desc">{{ p[2][:75] if p[2] else '' }}{% if p[2] and p[2]|length > 75 %}…{% endif %}</p>
+                    <div class="product-footer">
+                        <span class="product-price">${{ '{:,.0f}'.format(p[4]).replace(',', '.') if p[4] else '—' }}</span>
+                    </div>
+                </div>
+            </a>
+            <div style="padding: 0 1rem 1rem;">
+                {% if p[4] %}
+                <button type="button" class="btn-add"
+                        onclick="addToCart({{ p[0] }}, '{{ p[1] }}', {{ p[4] }}, 1)">
+                    + Agregar al carrito
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No se encontraron productos para <strong>"{{ q }}"</strong>.</p>
+        <a href="{{ url_for('catalogo') }}" class="btn-gold" style="margin-top:1.5rem;display:inline-block;">Volver al catálogo</a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

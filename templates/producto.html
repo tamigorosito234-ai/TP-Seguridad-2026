@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}{{ producto.nombre }} — AfinAR{% endblock %}
+
+{% block content %}
+<div class="page-container">
+
+    <a href="{{ url_for('catalogo') }}" class="breadcrumb">← Volver al catálogo</a>
+
+    <div class="product-detail">
+        <div class="detail-img-wrap">
+            {% if producto.imagen_url %}
+                <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="detail-img">
+            {% else %}
+                <div class="detail-img-placeholder">🎸</div>
+            {% endif %}
+        </div>
+
+        <div class="detail-info">
+            <span class="detail-cat">{{ producto.categoria }}</span>
+            <h1 class="detail-title">{{ producto.nombre }}</h1>
+            <p class="detail-desc">{{ producto.descripcion }}</p>
+
+            <div class="detail-price">${{ '{:,.0f}'.format(producto.precio).replace(',', '.') }}</div>
+
+            <div class="detail-stock {% if producto.stock <= 3 %}low{% endif %}">
+                {% if producto.stock == 0 %}
+                    ✕ Sin stock disponible
+                {% elif producto.stock <= 3 %}
+                    ⚠ Últimas {{ producto.stock }} unidades disponibles
+                {% else %}
+                    ✓ En stock ({{ producto.stock }} unidades para entrega inmediata)
+                {% endif %}
+            </div>
+
+            <!-- Selector de Cantidad interactivo -->
+            <div class="qty-row">
+                <span class="qty-label">Cantidad:</span>
+                <div class="qty-wrap">
+                    <button type="button" onclick="let input=document.getElementById('prod-qty'); if(input.value>1) input.value--;">−</button>
+                    <input type="number" id="prod-qty" value="1" min="1" max="{{ producto.stock }}">
+                    <button type="button" onclick="let input=document.getElementById('prod-qty'); if(input.value<{{ producto.stock }}) input.value++;">+</button>
+                </div>
+            </div>
+
+            <button type="button" class="btn-gold" style="width:100%;max-width:320px;padding:.85rem;font-size:.95rem;"
+                    onclick="addToCart({{ producto.id }}, '{{ producto.nombre }}', {{ producto.precio }}, parseInt(document.getElementById('prod-qty').value) || 1)">
+                🛒 Agregar al Carrito
+            </button>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
