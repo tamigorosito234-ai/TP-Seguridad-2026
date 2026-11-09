@@ -22,24 +22,26 @@ def index():
 
 
 # ---------------------------------------------------------------
-# LOGIN  ⚠️ VULNERABLE A SQL INJECTION
-#   Vulnerabilidad en backend (concatenación de entrada)
+# LOGIN  ✅ REMEDIADO CON CONSULTAS PARAMETRIZADAS (PREPARED STATEMENTS)
+#   Los valores de 'username' y 'password' se pasan como parámetros tupla.
+#   El motor de base de datos los trata estrictamente como datos literales,
+#   impidiendo que caracteres como ' o -- alteren la sintaxis SQL.
 # ---------------------------------------------------------------
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
 
     if request.method == 'POST':
-        username = request.form.get('username', '')
+        username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
-
-        # ⚠️ VULNERABLE: concatenación directa sin sanitizar
-        query = f"SELECT * FROM usuarios WHERE username='{username}' AND password='{password}'"
 
         conn = get_db()
         try:
-            user = conn.execute(query).fetchone()
+            # ✅ SEGURO: Parámetros posicionales '?'
+            query = "SELECT * FROM usuarios WHERE username = ? AND password = ?"
+            user = conn.execute(query, (username, password)).fetchone()
             conn.close()
+
             if user:
                 session['user'] = dict(user)
                 return redirect(url_for('catalogo'))
@@ -66,46 +68,51 @@ def logout():
 # ---------------------------------------------------------------
 @app.route('/catalogo')
 def catalogo():
-    categoria = request.args.get('categoria', '')
+    categoria = request.args.get('categoria', '').strip()
     conn = get_db()
     if categoria:
+        # ✅ SEGURO: Consulta parametrizada
         productos = conn.execute(
             'SELECT * FROM productos WHERE categoria = ?', (categoria,)
         ).fetchall()
     else:
         productos = conn.execute('SELECT * FROM productos').fetchall()
+
     categorias = conn.execute(
         'SELECT DISTINCT categoria FROM productos ORDER BY categoria'
     ).fetchall()
     conn.close()
+
     return render_template('catalogo.html', productos=productos,
                            categorias=categorias, categoria_activa=categoria)
 
 
 # ---------------------------------------------------------------
-# BUSCADOR  ⚠️ VULNERABLE A SQL INJECTION (UNION / extracción de datos)
+# BUSCADOR  ✅ REMEDIADO CON PARÁMETROS EN CLÁUSULA LIKE
+#   El comodín '%' se concatena al parámetro de datos en Python,
+#   no dentro de la consulta SQL. La base de datos recibe los datos
+#   de forma aislada, evitando inyecciones de tipo UNION o Blind.
 # ---------------------------------------------------------------
 @app.route('/buscar')
 def buscar():
     q = request.args.get('q', '').strip()
 
-    # Si se borra o se busca en blanco, vuelve al catálogo por defecto
     if not q:
         return redirect(url_for('catalogo'))
 
     resultados = []
-
-    # ⚠️ VULNERABLE: concatenación directa en cláusula LIKE
+    # ✅ SEGURO: El patrón se arma en el valor, no en la estructura de la consulta
+    pattern = f"%{q}%"
     query = (
-        f"SELECT * FROM productos "
-        f"WHERE nombre LIKE '%{q}%' "
-        f"OR descripcion LIKE '%{q}%' "
-        f"OR categoria LIKE '%{q}%'"
+        "SELECT * FROM productos "
+        "WHERE nombre LIKE ? "
+        "OR descripcion LIKE ? "
+        "OR categoria LIKE ?"
     )
 
     conn = get_db()
     try:
-        resultados = conn.execute(query).fetchall()
+        resultados = conn.execute(query, (pattern, pattern, pattern)).fetchall()
         conn.close()
     except Exception:
         conn.close()
@@ -115,16 +122,23 @@ def buscar():
 
 
 # ---------------------------------------------------------------
-# DETALLE DE PRODUCTO  ⚠️ VULNERABLE A SQL INJECTION (basada en entero)
+# DETALLE DE PRODUCTO  ✅ REMEDIADO CON VALIDACIÓN DE TIPO Y PARÁMETROS
+#   1. Se valida que el id sea estrictamente numérico (int).
+#   2. Se pasa el id sanitizado como parámetro posicional '?'.
 # ---------------------------------------------------------------
 @app.route('/producto/<id>')
 def producto(id):
-    # ⚠️ VULNERABLE: id inyectable directamente en la consulta
-    query = f"SELECT * FROM productos WHERE id={id}"
+    # ✅ SEGURO: Validación de tipo (Type Checking)
+    try:
+        producto_id = int(id)
+    except (ValueError, TypeError):
+        return render_template('error.html', error='Identificador de producto inválido.')
 
     conn = get_db()
     try:
-        p = conn.execute(query).fetchone()
+        # ✅ SEGURO: Consulta parametrizada
+        query = "SELECT * FROM productos WHERE id = ?"
+        p = conn.execute(query, (producto_id,)).fetchone()
         conn.close()
     except Exception:
         conn.close()

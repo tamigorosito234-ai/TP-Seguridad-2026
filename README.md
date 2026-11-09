@@ -1,13 +1,12 @@
 # AfinAR — Plataforma Web de Instrumentos Musicales
 ### Trabajo Práctico Integrador (TPI) — Seguridad en el Desarrollo de Software (UTN FRC - 2026)
+### 🔒 Rama: `secure` (Versión Remediada)
 
 ---
 
-## 📌 Descripción del Proyecto
+## 📌 Estado de esta Rama: Remediada y Segura
 
-**AfinAR** es una aplicación web de comercio electrónico desarrollada con **Python, Flask y SQLite** que simula un catálogo exclusivo de instrumentos musicales originales de fábrica y accesorios. 
-
-El objetivo de este proyecto es demostrar de forma práctica y didáctica el impacto de las vulnerabilidades de **Inyección SQL (SQLi)**, cómo pueden ser detectadas y explotadas mediante herramientas de auditoría (**SQLMap**), y cuál es la solución definitiva implementando **consultas preparadas / parametrizadas**.
+Esta rama contiene la solución a todas las vulnerabilidades de **Inyección SQL (SQLi)** presentes en la rama `main`. Se implementó el estándar de la industria recomendado por **OWASP**: el uso de **Consultas Parametrizadas (Prepared Statements)** y la **Validación Estricta de Tipos**.
 
 ---
 
@@ -21,116 +20,93 @@ El objetivo de este proyecto es demostrar de forma práctica y didáctica el imp
 
 ---
 
-## 🌿 Estructura de Ramas en el Repositorio
+## 🔄 Comparativa de Código: Vulnerable (`main`) vs Seguro (`secure`)
 
-Para facilitar la evaluación y la exposición oral, el repositorio está dividido en dos ramas:
+### 1. Inicio de Sesión (`/login`)
 
-| Rama | Estado | Descripción |
-|---|---|---|
-| `main` | ⚠️ **Vulnerable** | Contiene el código con inyecciones SQL directas por concatenación de parámetros. |
-| `secure` | ✅ **Corregido** | Versión remediada utilizando **consultas parametrizadas (Prepared Statements)** y validación de tipos. |
+```diff
+- # ⚠️ VULNERABLE (main): Concatenación directa de cadenas
+- query = f"SELECT * FROM usuarios WHERE username='{username}' AND password='{password}'"
+- user = conn.execute(query).fetchone()
 
-### ¿Cómo cambiar entre versiones?
-
-```bash
-# Para probar la versión vulnerable:
-git checkout main
-
-# Para probar la versión segura (remediada):
-git checkout secure
++ # ✅ SEGURO (secure): Consulta parametrizada con placeholder '?'
++ query = "SELECT * FROM usuarios WHERE username = ? AND password = ?"
++ user = conn.execute(query, (username, password)).fetchone()
 ```
+> **Fundamento:** El motor SQLite compila la estructura de la consulta de antemano. Los valores `username` y `password` se envían en un canal separado y se procesan exclusivamente como literales de texto. Aunque el atacante ingrese `' OR 1=1 --`, el motor buscará textualmente un usuario cuyo nombre sea esa cadena exacta.
 
 ---
 
-## 🚀 Requisitos e Instalación
+### 2. Buscador (`/buscar?q=`)
 
-### 1. Clonar el repositorio
-```bash
-git clone <URL_DE_TU_REPOSITORIO>
-cd TP-2026
-```
+```diff
+- # ⚠️ VULNERABLE (main): Interpolación en la cláusula LIKE
+- query = f"SELECT * FROM productos WHERE nombre LIKE '%{q}%' OR descripcion LIKE '%{q}%' OR categoria LIKE '%{q}%'"
+- resultados = conn.execute(query).fetchall()
 
-### 2. Instalar dependencias
-Se recomienda utilizar un entorno virtual con Python 3.10+:
-```bash
-python -m pip install -r requirements.txt
++ # ✅ SEGURO (secure): El comodín '%' se añade al parámetro en Python
++ pattern = f"%{q}%"
++ query = "SELECT * FROM productos WHERE nombre LIKE ? OR descripcion LIKE ? OR categoria LIKE ?"
++ resultados = conn.execute(query, (pattern, pattern, pattern)).fetchall()
 ```
-
-### 3. Inicializar la base de datos
-La base de datos SQLite contiene 5 usuarios ficticios y 25 productos precargados con fotos locales:
-```bash
-python database.py
-```
-
-### 4. Ejecutar la aplicación
-```bash
-python app.py
-```
-La aplicación quedará disponible en: **http://127.0.0.1:5000**
+> **Fundamento:** Evita la inyección de sentencias `UNION`, subconsultas y operadores booleanos. Cualquier carácter especial dentro de `q` es tratado como parte del texto de búsqueda.
 
 ---
 
-## ⚠️ Puntos Vulnerables en esta rama (`main`)
+### 3. Detalle de Producto (`/producto/<id>`)
 
-### 1. Autenticación (`POST /login`)
-- **Vulnerabilidad:** Concatenación directa de las credenciales en la consulta SQL.
-- **Código vulnerable:**
-  ```python
-  query = f"SELECT * FROM usuarios WHERE username='{username}' AND password='{password}'"
-  ```
-- **Prueba manual (Bypass de autenticación):**
-  - **Usuario:** `giorgi_l' --`
-  - **Contraseña:** (cualquier texto)
-  - **Resultado:** Inicio de sesión exitoso como administrador sin conocer la contraseña.
+```diff
+- # ⚠️ VULNERABLE (main): Parámetro inyectado directamente
+- query = f"SELECT * FROM productos WHERE id={id}"
+- p = conn.execute(query).fetchone()
 
-### 2. Buscador (`GET /buscar?q=`)
-- **Vulnerabilidad:** Cláusula `LIKE` construida mediante interpolación de cadenas.
-- **Código vulnerable:**
-  ```python
-  query = f"SELECT * FROM productos WHERE nombre LIKE '%{q}%' OR descripcion LIKE '%{q}%' OR categoria LIKE '%{q}%'"
-  ```
-- **Prueba manual (Extracción mediante UNION):**
-  - **Búsqueda:** `%' UNION SELECT id, username, password, email, rol, 0, '' FROM usuarios --`
-  - **Resultado:** Se vuelcan los usuarios y contraseñas de la base de datos dentro de los resultados del catálogo.
-
-### 3. Detalle de Producto (`GET /producto/<id>`)
-- **Vulnerabilidad:** Parámetro numérico no validado ni casteado a entero.
-- **Código vulnerable:**
-  ```python
-  query = f"SELECT * FROM productos WHERE id={id}"
-  ```
++ # ✅ SEGURO (secure): Validación de tipo entero + consulta parametrizada
++ try:
++     producto_id = int(id)
++ except (ValueError, TypeError):
++     return render_template('error.html', error='Identificador de producto inválido.')
++
++ query = "SELECT * FROM productos WHERE id = ?"
++ p = conn.execute(query, (producto_id,)).fetchone()
+```
+> **Fundamento:** Se aplica defensa en profundidad: validación de tipos previa (`int(id)`) y parametrización de la consulta.
 
 ---
 
-## 🛠️ Auditoría y Explotación con SQLMap
+## 🧪 Verificación de Remediación con SQLMap
 
-### Ataque 1: Inyección en el buscador (`/buscar`)
-Para detectar la inyección y extraer las tablas de la base de datos:
+Con la aplicación en ejecución (`python app.py`), se ejecutan las mismas pruebas de SQLMap que en la rama `main`:
+
+### 1. Prueba en el buscador:
 ```bash
 sqlmap -u "http://127.0.0.1:5000/buscar?q=guitarra" --batch
 ```
+**Resultado esperado:**
+> `[CRITICAL] all tested parameters do not appear to be injectable`
 
-Para dumpear la tabla de usuarios:
-```bash
-sqlmap -u "http://127.0.0.1:5000/buscar?q=guitarra" --dump -T usuarios --batch
-```
-
-### Ataque 2: Inyección en el Login (`/login`)
+### 2. Prueba en el Login:
 ```bash
 sqlmap -u "http://127.0.0.1:5000/login" --data="username=test&password=test" --method=POST --batch
 ```
+**Resultado esperado:**
+> `[WARNING] POST parameter 'username' does not seem to be injectable`
 
-### Ataque 3: Inyección en el parámetro ID (`/producto/<id>`)
+### 3. Prueba en el ID de Producto:
 ```bash
 sqlmap -u "http://127.0.0.1:5000/producto/1" --batch
 ```
+**Resultado esperado:**
+> `[CRITICAL] all tested parameters do not appear to be injectable`
 
 ---
 
-## 🔒 Solución y Verificación
+## 🔀 Volver a la versión vulnerable
 
-Para ver el código corregido y comprobar con **SQLMap** que las inyecciones ya no son explotables:
+Para alternar entre ramas:
 ```bash
+# Cambiar a la versión vulnerable:
+git checkout main
+
+# Regresar a la versión segura:
 git checkout secure
 ```
-En la rama `secure` se explica en detalle el diff de remediación y la verificación técnica.
