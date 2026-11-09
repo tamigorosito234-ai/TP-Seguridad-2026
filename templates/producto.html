@@ -43,7 +43,7 @@
             </div>
 
             <button type="button" class="btn-gold" style="width:100%;max-width:320px;padding:.85rem;font-size:.95rem;"
-                    onclick="addToCart({{ producto.id }}, '{{ producto.nombre }}', {{ producto.precio }}, parseInt(document.getElementById('prod-qty').value) || 1)">
+                    onclick="addToCart({{ producto.id }}, {{ producto.nombre|tojson }}, {{ producto.precio }}, parseInt(document.getElementById('prod-qty').value) || 1)">
                 🛒 Agregar al Carrito
             </button>
         </div>

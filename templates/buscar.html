@@ -32,7 +32,7 @@
             <div style="padding: 0 1rem 1rem;">
                 {% if p[4] %}
                 <button type="button" class="btn-add"
-                        onclick="addToCart({{ p[0] }}, '{{ p[1] }}', {{ p[4] }}, 1)">
+                        onclick="addToCart({{ p[0] }}, {{ p[1]|tojson }}, {{ p[4] }}, 1)">
                     + Agregar al carrito
                 </button>
                 {% endif %}
