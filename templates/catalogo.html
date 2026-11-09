@@ -48,7 +48,7 @@
             </a>
             <div style="padding: 0 1rem 1rem;">
                 <button type="button" class="btn-add"
-                        onclick="addToCart({{ p.id }}, '{{ p.nombre }}', {{ p.precio }}, 1)">
+                        onclick="addToCart({{ p.id }}, {{ p.nombre|tojson }}, {{ p.precio }}, 1)">
                     + Agregar al carrito
                 </button>
             </div>

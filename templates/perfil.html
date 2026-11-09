@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Mi Perfil — AfinAR{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>Mi <span class="accent">Cuenta</span></h1>
+        <p class="page-sub">Información de tu perfil y cuenta de usuario</p>
+    </div>
+
+    <div style="max-width: 540px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2rem;">
+        <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border);">
+            <div style="font-size: 3rem;">👤</div>
+            <div>
+                <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--text);">{{ user.username }}</h2>
+                <span class="product-cat" style="font-size: .75rem;">Rol: {{ user.rol|upper }}</span>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem; font-size: .9rem;">
+            <div>
+                <span style="color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; display: block;">Correo Electrónico</span>
+                <span style="color: var(--text); font-weight: 500;">{{ user.email }}</span>
+            </div>
+            <div>
+                <span style="color: var(--text-muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; display: block;">Identificador Interno</span>
+                <span style="color: var(--text-muted);">#{{ user.id }} (Validado por sesión en servidor)</span>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <a href="{{ url_for('catalogo') }}" class="btn-gold">Explorar Catálogo</a>
+            <a href="{{ url_for('logout') }}" class="btn-outline">Cerrar Sesión</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

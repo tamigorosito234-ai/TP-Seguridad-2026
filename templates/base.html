@@ -31,7 +31,7 @@
             </button>
 
             {% if session.get('user') %}
-                <span class="nav-user">👤 {{ session.user.username }}</span>
+                <a href="{{ url_for('perfil') }}" class="nav-user" title="Ver mi cuenta">👤 {{ session.user.username }}</a>
                 <a href="{{ url_for('logout') }}" class="btn-outline">Salir</a>
             {% else %}
                 <a href="{{ url_for('login') }}" class="btn-gold">Ingresar</a>
