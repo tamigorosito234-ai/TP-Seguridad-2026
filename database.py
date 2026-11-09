@@ -34,7 +34,7 @@ def init_db():
     usuarios = [
         ('giorgi_l',   'lorenzo2026',  'lorgiorgi@gmail.com',      'admin'),
         ('franco_m',   'franco2026',   'franco.martina@gmail.com',  'cliente'),
-        ('rojo_r',     'rojo2026',     'roberto.rojo@gmail.com',    'cliente'),
+        ('rojo_r',     'roberto2026',  'roberto.rojo@gmail.com',    'cliente'),
         ('gorosito_t', 'tamara2026',   'gorosito.t@gmail.com',      'cliente'),
         ('crespin_s',  'sasha2026',    'crespin.sasha@gmail.com',   'cliente'),
     ]
