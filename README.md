@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AfinAR — Plataforma Web de Instrumentos Musicales
 ### Trabajo Práctico Integrador (TPI) — Seguridad en el Desarrollo de Software (UTN FRC - 2026)
 
@@ -134,3 +135,6 @@ Para ver el código corregido y comprobar con **SQLMap** que las inyecciones ya 
 git checkout secure
 ```
 En la rama `secure` se explica en detalle el diff de remediación y la verificación técnica.
+=======
+# TP-Seguridad-2026
+>>>>>>> 53ba43bef297a0ff211bcae28de8957edcceb8d4
